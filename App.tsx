@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   ChevronLeft, ChevronRight, Plus, LayoutGrid, BarChart3, 
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon, Home
 } from 'lucide-react';
 import { 
   getDaysInMonth, getFirstDayOfMonth, formatDateISO, parseDateISO, isSameDay, addDays 
@@ -12,6 +12,7 @@ import { saveSessions, getSessions } from './services/storageService';
 import { AddScheduleModal } from './components/AddScheduleModal';
 import { SessionDetailModal } from './components/SessionDetailModal';
 import { Reports } from './components/Reports';
+import { Dashboard } from './components/Dashboard';
 
 // Generate UUID simple helper
 const generateId = () => Math.random().toString(36).substr(2, 9);
@@ -20,7 +21,8 @@ export default function App() {
   // --- State ---
   const [currentDate, setCurrentDate] = useState(new Date());
   const [sessions, setSessions] = useState<Session[]>([]);
-  const [view, setView] = useState<'calendar' | 'reports'>('calendar');
+  // Changed default view to 'dashboard'
+  const [view, setView] = useState<'dashboard' | 'calendar' | 'reports'>('dashboard');
   
   // Modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -152,25 +154,31 @@ export default function App() {
       {/* Navbar */}
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-pilates-600 rounded-lg flex items-center justify-center text-white">
+          <div className="flex items-center gap-2" onClick={() => setView('dashboard')}>
+            <div className="w-8 h-8 bg-pilates-600 rounded-lg flex items-center justify-center text-white cursor-pointer">
               <LayoutGrid size={20} />
             </div>
-            <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pilates-700 to-pilates-500">
+            <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pilates-700 to-pilates-500 cursor-pointer">
               PilatesTakip
             </h1>
           </div>
           
-          <div className="flex bg-gray-100 p-1 rounded-lg">
+          <div className="flex bg-gray-100 p-1 rounded-lg overflow-x-auto">
+            <button 
+              onClick={() => setView('dashboard')}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-2 transition-all whitespace-nowrap ${view === 'dashboard' ? 'bg-white shadow text-pilates-700' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <Home size={16} /> <span className="hidden sm:inline">Ana Sayfa</span>
+            </button>
             <button 
               onClick={() => setView('calendar')}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-2 transition-all ${view === 'calendar' ? 'bg-white shadow text-pilates-700' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-2 transition-all whitespace-nowrap ${view === 'calendar' ? 'bg-white shadow text-pilates-700' : 'text-gray-500 hover:text-gray-700'}`}
             >
               <CalendarIcon size={16} /> <span className="hidden sm:inline">Takvim</span>
             </button>
             <button 
               onClick={() => setView('reports')}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-2 transition-all ${view === 'reports' ? 'bg-white shadow text-pilates-700' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-2 transition-all whitespace-nowrap ${view === 'reports' ? 'bg-white shadow text-pilates-700' : 'text-gray-500 hover:text-gray-700'}`}
             >
               <BarChart3 size={16} /> <span className="hidden sm:inline">Raporlar</span>
             </button>
@@ -181,6 +189,14 @@ export default function App() {
       {/* Main Content */}
       <main className="flex-1 max-w-7xl mx-auto w-full p-4 sm:p-6">
         
+        {view === 'dashboard' && (
+          <Dashboard 
+            sessions={sessions}
+            onNavigate={setView}
+            onSessionClick={handleSessionClick}
+          />
+        )}
+
         {view === 'calendar' && (
           <div className="space-y-6 animate-fade-in">
             {/* Calendar Header */}
