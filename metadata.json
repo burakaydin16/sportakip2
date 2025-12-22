@@ -1,0 +1,5 @@
+{
+  "name": "PilatesTakip",
+  "description": "Kişisel pilates ders programı takibi, toplu ders ekleme, erteleme ve katılım raporlama uygulaması.",
+  "requestFramePermissions": []
+}
