@@ -1,11 +1,13 @@
+
 import { supabase } from '../lib/supabase';
 import { Session, SessionStatus } from '../types';
 
 export const sessionService = {
-  async getAll(): Promise<Session[]> {
+  async getByAthlete(athleteId: string): Promise<Session[]> {
     const { data, error } = await supabase
       .from('sessions')
       .select('*')
+      .eq('athlete_id', athleteId)
       .order('date', { ascending: true })
       .order('time', { ascending: true });
 
@@ -13,6 +15,7 @@ export const sessionService = {
     
     return (data || []).map(row => ({
       id: row.id,
+      athlete_id: row.athlete_id,
       date: row.date,
       time: row.time,
       duration: row.duration,
@@ -22,8 +25,9 @@ export const sessionService = {
     }));
   },
 
-  async createBulk(sessions: Omit<Session, 'id' | 'status'>[]): Promise<void> {
+  async createBulk(athleteId: string, sessions: Omit<Session, 'id' | 'status' | 'athlete_id'>[]): Promise<void> {
     const rows = sessions.map(s => ({
+      athlete_id: athleteId,
       date: s.date,
       time: s.time,
       duration: s.duration,

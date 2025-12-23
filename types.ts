@@ -1,23 +1,33 @@
+
 export enum SessionStatus {
   SCHEDULED = 'SCHEDULED',
   ATTENDED = 'ATTENDED',
   MISSED = 'MISSED',
   INSTRUCTOR_CANCELLED = 'INSTRUCTOR_CANCELLED',
-  RESCHEDULED = 'RESCHEDULED' // Used for history, but active session usually just changes date
+  RESCHEDULED = 'RESCHEDULED'
+}
+
+export interface Athlete {
+  id: string;
+  name: string;
+  phone?: string;
+  notes?: string;
+  created_at: string;
 }
 
 export interface Session {
   id: string;
-  date: string; // ISO String for the date part YYYY-MM-DD
-  time: string; // HH:mm
-  duration: number; // Minutes
+  athlete_id: string;
+  date: string;
+  time: string;
+  duration: number;
   status: SessionStatus;
-  originalDate?: string; // If rescheduled, keep track of original
+  originalDate?: string;
   notes?: string;
 }
 
 export interface DayOfWeekOption {
-  value: number; // 0-6 (Sunday-Saturday)
+  value: number;
   label: string;
 }
 
@@ -30,11 +40,3 @@ export const DAYS_OF_WEEK: DayOfWeekOption[] = [
   { value: 6, label: 'Cumartesi' },
   { value: 0, label: 'Pazar' },
 ];
-
-export interface StatsSummary {
-  total: number;
-  attended: number;
-  missed: number;
-  cancelled: number;
-  attendanceRate: number;
-}
