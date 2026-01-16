@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  LayoutGrid, BarChart3, Calendar as CalendarIcon, Home, Loader2, AlertCircle, RefreshCw, Users, Plus, UserPlus
+  LayoutGrid, BarChart3, Calendar as CalendarIcon, Home, Loader2, AlertCircle, RefreshCw, Users, Plus, UserPlus, Trash2
 } from 'lucide-react';
 import { Session, Athlete } from './types';
 import { sessionService } from './services/sessionService';
@@ -25,7 +25,6 @@ export default function App() {
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [newAthleteName, setNewAthleteName] = useState('');
 
-  // İlk yükleme: Sporcuları getir
   const loadInitialData = async () => {
     setLoading(true);
     try {
@@ -33,10 +32,13 @@ export default function App() {
       setAthletes(athleteList);
       if (athleteList.length > 0) {
         setSelectedAthlete(athleteList[0]);
+      } else {
+        setSelectedAthlete(null);
       }
       setError(null);
     } catch (err: any) {
-      setError("Bağlantı hatası: Sporcular yüklenemedi.");
+      console.error("Yükleme hatası:", err);
+      setError("Bağlantı hatası: Sporcular yüklenemedi. Veritabanı tablolarını kontrol edin.");
     } finally {
       setLoading(false);
     }
@@ -46,7 +48,6 @@ export default function App() {
     loadInitialData();
   }, []);
 
-  // Seçili sporcu değişince dersleri yükle
   useEffect(() => {
     if (selectedAthlete) {
       fetchSessions();
@@ -61,7 +62,7 @@ export default function App() {
       const data = await sessionService.getByAthlete(selectedAthlete.id);
       setSessions(data);
     } catch (err: any) {
-      console.error(err);
+      console.error("Ders yükleme hatası:", err);
     }
   };
 
@@ -73,20 +74,30 @@ export default function App() {
       setSelectedAthlete(created);
       setNewAthleteName('');
       setIsAthleteModalOpen(false);
-    } catch (err) {
+    } catch (err: any) {
+      console.error(err);
       alert("Sporcu eklenirken hata oluştu.");
     }
   };
 
-  const handleDeleteAthlete = async (id: string) => {
-    if (!confirm("Sporcuyu ve tüm derslerini silmek istediğinize emin misiniz?")) return;
+  const handleSoftDeleteAthlete = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!selectedAthlete) return;
+    
+    const confirmResult = window.confirm(`${selectedAthlete.name} isimli sporcunun kaydını kapatmak istediğinize emin misiniz?`);
+    
+    if (!confirmResult) return;
+    
     try {
-      await athleteService.delete(id);
-      const remaining = athletes.filter(a => a.id !== id);
+      await athleteService.softDelete(selectedAthlete.id);
+      const remaining = athletes.filter(a => a.id !== selectedAthlete.id);
       setAthletes(remaining);
       setSelectedAthlete(remaining.length > 0 ? remaining[0] : null);
-    } catch (err) {
-      alert("Sporcu silinemedi.");
+    } catch (err: any) {
+      console.error("Silme hatası:", err);
+      alert("Sporcu pasifize edilemedi. Lütfen 'is_active' sütununun veritabanında mevcut olduğundan emin olun.");
     }
   };
 
@@ -129,7 +140,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans">
-      {/* Navbar */}
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-2 cursor-pointer flex-shrink-0" onClick={() => setView('dashboard')}>
@@ -139,30 +149,40 @@ export default function App() {
             <h1 className="text-xl font-bold text-slate-800 tracking-tight hidden sm:block">Pilates<span className="text-pilates-600">Takip</span></h1>
           </div>
 
-          {/* Sporcu Seçici */}
-          <div className="flex-1 max-w-xs">
-            <div className="relative group">
-              <Users className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+          <div className="flex-1 max-w-sm flex items-center gap-2">
+            <div className="relative flex-1">
+              <Users className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 z-10" size={16} />
               <select 
                 value={selectedAthlete?.id || ''}
                 onChange={(e) => {
                   const athlete = athletes.find(a => a.id === e.target.value);
                   if (athlete) setSelectedAthlete(athlete);
                 }}
-                className="w-full pl-9 pr-4 py-2 bg-slate-100 border-none rounded-xl text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-pilates-500 appearance-none cursor-pointer"
+                className="w-full pl-9 pr-20 py-2 bg-slate-100 border-none rounded-xl text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-pilates-500 appearance-none cursor-pointer relative z-0"
               >
                 {athletes.length === 0 && <option value="">Sporcu Yok</option>}
                 {athletes.map(a => (
                   <option key={a.id} value={a.id}>{a.name}</option>
                 ))}
               </select>
-              <button 
-                onClick={() => setIsAthleteModalOpen(true)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-pilates-600 hover:bg-white rounded-lg transition-colors"
-                title="Yeni Sporcu Ekle"
-              >
-                <Plus size={16} />
-              </button>
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 z-20">
+                <button 
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsAthleteModalOpen(true); }}
+                  className="p-1.5 text-pilates-600 hover:bg-white rounded-lg transition-all shadow-sm"
+                  title="Yeni Sporcu Ekle"
+                >
+                  <Plus size={16} />
+                </button>
+                {selectedAthlete && (
+                  <button 
+                    onClick={handleSoftDeleteAthlete}
+                    className="p-1.5 text-red-400 hover:text-red-600 hover:bg-white rounded-lg transition-all shadow-sm"
+                    title="Sporcuyu Pasife Al"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
@@ -174,7 +194,6 @@ export default function App() {
         </div>
       </nav>
 
-      {/* Main Content */}
       <main className="flex-1 max-w-6xl mx-auto w-full p-4 sm:p-8">
         {error ? (
           <div className="bg-red-50 border border-red-200 p-6 rounded-2xl text-center">
@@ -187,7 +206,7 @@ export default function App() {
             <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 mb-4">
               <Users size={40} />
             </div>
-            <h2 className="text-2xl font-bold text-slate-800">Henüz Sporcu Yok</h2>
+            <h2 className="text-2xl font-bold text-slate-800">Henüz Aktif Sporcu Yok</h2>
             <p className="text-slate-500 mb-6 max-w-md">Programları takip edebilmek için önce bir sporcu eklemelisiniz.</p>
             <button 
               onClick={() => setIsAthleteModalOpen(true)}
@@ -205,7 +224,6 @@ export default function App() {
         )}
       </main>
 
-      {/* Modal: Sporcu Ekleme */}
       <Modal isOpen={isAthleteModalOpen} onClose={() => setIsAthleteModalOpen(false)} title="Yeni Sporcu Ekle">
         <div className="space-y-4">
           <div className="space-y-2">
@@ -219,19 +237,9 @@ export default function App() {
               autoFocus
             />
           </div>
-          <div className="flex justify-between items-center gap-3 pt-2">
-            {selectedAthlete && (
-              <button 
-                onClick={() => handleDeleteAthlete(selectedAthlete.id)}
-                className="text-red-500 text-sm font-bold hover:underline"
-              >
-                Mevcut Sporcuyu Sil
-              </button>
-            )}
-            <div className="flex gap-2 ml-auto">
-              <button onClick={() => setIsAthleteModalOpen(false)} className="px-4 py-2 text-slate-500 font-bold">Vazgeç</button>
-              <button onClick={handleAddAthlete} className="px-6 py-2 bg-pilates-600 text-white rounded-xl font-bold">Kaydet</button>
-            </div>
+          <div className="flex justify-end items-center gap-3 pt-2">
+            <button onClick={() => setIsAthleteModalOpen(false)} className="px-4 py-2 text-slate-500 font-bold">Vazgeç</button>
+            <button onClick={handleAddAthlete} className="px-6 py-2 bg-pilates-600 text-white rounded-xl font-bold">Kaydet</button>
           </div>
         </div>
       </Modal>
