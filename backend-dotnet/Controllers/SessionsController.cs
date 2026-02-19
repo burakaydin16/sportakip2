@@ -43,13 +43,13 @@ namespace PilatesApi.Controllers
                 _context.Sessions.Add(session);
             }
             await _context.SaveChangesAsync();
-            return Ok();
+            return StatusCode(201);
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> PutSession(Guid id, Session session)
         {
-            if (id != session.id) return BadRequest();
+            if (id != session.Id) return BadRequest();
             _context.Entry(session).State = EntityState.Modified;
             await _context.SaveChangesAsync();
             return NoContent();
