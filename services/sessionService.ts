@@ -1,61 +1,37 @@
 
-import { supabase } from '../lib/supabase';
 import { Session, SessionStatus } from '../types';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export const sessionService = {
   async getByAthlete(athleteId: string): Promise<Session[]> {
-    const { data, error } = await supabase
-      .from('sessions')
-      .select('*')
-      .eq('athlete_id', athleteId)
-      .order('date', { ascending: true })
-      .order('time', { ascending: true });
-
-    if (error) throw error;
-    
-    return (data || []).map(row => ({
-      id: row.id,
-      athlete_id: row.athlete_id,
-      date: row.date,
-      time: row.time,
-      duration: row.duration,
-      status: row.status as SessionStatus,
-      originalDate: row.original_date,
-      notes: row.notes
-    }));
+    const response = await fetch(`${API_URL}/sessions/athlete/${athleteId}`);
+    if (!response.ok) throw new Error('Seanslar yüklenemedi');
+    return response.json();
   },
 
   async createBulk(athleteId: string, sessions: Omit<Session, 'id' | 'status' | 'athlete_id'>[]): Promise<void> {
-    const rows = sessions.map(s => ({
-      athlete_id: athleteId,
-      date: s.date,
-      time: s.time,
-      duration: s.duration,
-      status: 'SCHEDULED'
-    }));
-
-    const { error } = await supabase.from('sessions').insert(rows);
-    if (error) throw error;
+    const response = await fetch(`${API_URL}/sessions/bulk`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ athleteId, sessions })
+    });
+    if (!response.ok) throw new Error('Toplu seans oluşturulamadı');
   },
 
   async update(session: Session): Promise<void> {
-    const { error } = await supabase
-      .from('sessions')
-      .update({
-        date: session.date,
-        time: session.time,
-        duration: session.duration,
-        status: session.status,
-        original_date: session.originalDate,
-        notes: session.notes
-      })
-      .eq('id', session.id);
-
-    if (error) throw error;
+    const response = await fetch(`${API_URL}/sessions/${session.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(session)
+    });
+    if (!response.ok) throw new Error('Seans güncellenemedi');
   },
 
   async delete(id: string): Promise<void> {
-    const { error } = await supabase.from('sessions').delete().eq('id', id);
-    if (error) throw error;
+    const response = await fetch(`${API_URL}/sessions/${id}`, {
+      method: 'DELETE'
+    });
+    if (!response.ok) throw new Error('Seans silinemedi');
   }
 };

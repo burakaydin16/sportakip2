@@ -1,39 +1,36 @@
 
-import { supabase } from '../lib/supabase';
 import { Athlete } from '../types';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export const athleteService = {
   async getAll(): Promise<Athlete[]> {
-    const { data, error } = await supabase
-      .from('athletes')
-      .select('*')
-      .eq('is_active', true) // Sadece aktif olanlar
-      .order('name', { ascending: true });
-    if (error) throw error;
-    return data || [];
+    const response = await fetch(`${API_URL}/athletes`);
+    if (!response.ok) throw new Error('Sporcular yüklenemedi');
+    return response.json();
   },
 
   async create(name: string, phone?: string): Promise<Athlete> {
-    const { data, error } = await supabase
-      .from('athletes')
-      .insert([{ name, phone, is_active: true }])
-      .select()
-      .single();
-    if (error) throw error;
-    return data;
+    const response = await fetch(`${API_URL}/athletes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, phone, is_active: true })
+    });
+    if (!response.ok) throw new Error('Sporcu oluşturulamadı');
+    return response.json();
   },
 
   async softDelete(id: string): Promise<void> {
-    const { error } = await supabase
-      .from('athletes')
-      .update({ is_active: false })
-      .eq('id', id);
-    if (error) throw error;
+    const response = await fetch(`${API_URL}/athletes/${id}/soft-delete`, {
+      method: 'POST'
+    });
+    if (!response.ok) throw new Error('Sporcu silinemedi');
   },
 
   async delete(id: string): Promise<void> {
-    // Gerçekten silmek isterseniz diye kalsın
-    const { error } = await supabase.from('athletes').delete().eq('id', id);
-    if (error) throw error;
+    const response = await fetch(`${API_URL}/athletes/${id}`, {
+      method: 'DELETE'
+    });
+    if (!response.ok) throw new Error('Sporcu tamamen silinemedi');
   }
 };

@@ -38,7 +38,7 @@ export default function App() {
       setError(null);
     } catch (err: any) {
       console.error("Yükleme hatası:", err);
-      setError("Bağlantı hatası: Sporcular yüklenemedi. Veritabanı tablolarını kontrol edin.");
+      setError("Bağlantı hatası: Sporcular yüklenemedi. API servisinin çalıştığından emin olun.");
     } finally {
       setLoading(false);
     }
