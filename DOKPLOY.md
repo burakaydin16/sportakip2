@@ -15,7 +15,7 @@
 ## Port
 
 - **Domain ile:** Dokploy Domains'te Service=frontend, Port=**80** seçin
-- **IP ile:** `http://SUNUCU_IP:3000` adresinden erişin
+- **IP ile:** `http://SUNUCU_IP:8080` adresinden erişin
 
 ## Veritabanı
 
