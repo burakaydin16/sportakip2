@@ -3,16 +3,19 @@
 ## Hızlı Kurulum
 
 1. **Dokploy** panelinde yeni **Docker Compose** uygulaması oluştur
-2. Repo'yu bağla
-3. Compose dosyası olarak `docker-compose.yml` seç
-4. **Environment Variables** bölümüne ekle:
-   - `DATABASE_URL` = PostgreSQL bağlantı URL'niz (örn: `postgresql://kullanici:sifre@host:5432/sportakip`)
-   - `DATABASE_SSL` = `true` (isteğe bağlı, varsayılan: true)
+2. Repo'yu bağla, compose dosyası olarak `docker-compose.yml` seç
+3. **Environment Variables** ekle:
+   - `DATABASE_URL` = PostgreSQL bağlantı URL'niz
+   - `DATABASE_SSL` = `false` (SSL desteklemeyen sunucular için zorunlu)
+4. **Domains** sekmesinde domain ekleyecekseniz:
+   - **Service:** `frontend`
+   - **Port:** `80` (önemli: 3000 değil!)
 5. **Build & Deploy** ile projeyi derle ve çalıştır
 
 ## Port
 
-Frontend `3000` portunda yayınlanır. Dokploy'da domain veya reverse proxy ile istediğiniz adrese yönlendirebilirsiniz.
+- **Domain ile:** Dokploy Domains'te Service=frontend, Port=**80** seçin
+- **IP ile:** `http://SUNUCU_IP:3000` adresinden erişin
 
 ## Veritabanı
 
